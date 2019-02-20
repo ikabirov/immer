@@ -6,9 +6,64 @@ export function generatePatches(state, basePath, patches, inversePatches) {
         : generateObjectPatches(state, basePath, patches, inversePatches)
 }
 
+function generateInsertToArrayPatches(
+    base,
+    copy,
+    basePath,
+    patches,
+    inversePatches
+) {
+    const delta = copy.length - base.length
+
+    if (delta <= 0) {
+        return false
+    }
+
+    let i = 0
+    while (base[i] === copy[i] && i < base.length) {
+        ++i
+    }
+
+    for (let j = i; j < base.length; ++j) {
+        if (base[i] !== copy[i + delta]) {
+            return false
+        }
+    }
+
+    if (i == base.length) {
+        return false
+    }
+
+    for (let j = 0; j < delta; ++j) {
+        const path = basePath.concat([i + j])
+        patches.push({
+            op: "add",
+            path,
+            value: copy[i + j]
+        })
+        inversePatches.push({
+            op: "remove",
+            path
+        })
+    }
+
+    return true
+}
+
 function generateArrayPatches(state, basePath, patches, inversePatches) {
     const {base, copy, assigned} = state
     const minLength = Math.min(base.length, copy.length)
+    if (
+        generateInsertToArrayPatches(
+            base,
+            copy,
+            basePath,
+            patches,
+            inversePatches
+        )
+    ) {
+        return
+    }
 
     // Look for replaced indices.
     for (let i = 0; i < minLength; i++) {
@@ -87,15 +142,19 @@ export function applyPatches(draft, patches) {
             const key = path[path.length - 1]
             switch (patch.op) {
                 case "replace":
-                case "add":
-                    // TODO: add support is not extensive, it does not support insertion or `-` atm!
                     base[key] = patch.value
+                    break
+                case "add":
+                    if (Array.isArray(base)) {
+                        base.splice(key, 0, patch.value)
+                    } else {
+                        // TODO: add support is not extensive, it does not support insertion or `-` atm!
+                        base[key] = patch.value
+                    }
                     break
                 case "remove":
                     if (Array.isArray(base)) {
-                        if (key !== base.length - 1)
-                            throw new Error(`Only the last index of an array can be removed, index: ${key}, length: ${base.length}`) // prettier-ignore
-                        base.length -= 1
+                        base.splice(key, 1)
                     } else {
                         delete base[key]
                     }

@@ -76,7 +76,7 @@ describe("applyPatches", () => {
             applyPatches({}, [patch])
         }).toThrowError(/^Cannot apply patch, path doesn't resolve:/)
     })
-    it("throws when a patch tries to splice an array", () => {
+    it("not throws when a patch tries to splice an array", () => {
         // Pop is ok
         expect(() => {
             const patch = {op: "remove", path: [0]}
@@ -87,7 +87,7 @@ describe("applyPatches", () => {
         expect(() => {
             const patch = {op: "remove", path: [0]}
             applyPatches([1, 2], [patch])
-        }).toThrowError(/^Only the last index of an array can be removed/)
+        }).not.toThrowError()
     })
 })
 
@@ -198,12 +198,7 @@ describe("arrays - prepend", () => {
         d => {
             d.x.unshift(4)
         },
-        [
-            {op: "replace", path: ["x", 0], value: 4},
-            {op: "replace", path: ["x", 1], value: 1},
-            {op: "replace", path: ["x", 2], value: 2},
-            {op: "add", path: ["x", 3], value: 3}
-        ]
+        [{op: "add", path: ["x", 0], value: 4}]
     )
 })
 
