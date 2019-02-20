@@ -202,6 +202,20 @@ describe("arrays - prepend", () => {
     )
 })
 
+describe("arrays - multiple prepend", () => {
+    runPatchTest(
+        {x: [1, 2, 3]},
+        d => {
+            d.x.unshift(4)
+            d.x.unshift(5)
+        },
+        [
+            {op: "add", path: ["x", 0], value: 5},
+            {op: "add", path: ["x", 1], value: 4}
+        ]
+    )
+})
+
 describe("arrays - splice middle", () => {
     runPatchTest(
         {x: [1, 2, 3]},

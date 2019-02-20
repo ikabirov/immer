@@ -30,10 +30,7 @@ function generateInsertToArrayPatches(
         }
     }
 
-    if (i == base.length) {
-        return false
-    }
-
+    const useRemove = i != base.length
     for (let j = 0; j < delta; ++j) {
         const path = basePath.concat([i + j])
         patches.push({
@@ -41,9 +38,19 @@ function generateInsertToArrayPatches(
             path,
             value: copy[i + j]
         })
+        if (useRemove) {
+            inversePatches.unshift({
+                op: "remove",
+                path
+            })
+        }
+    }
+
+    if (!useRemove) {
         inversePatches.push({
-            op: "remove",
-            path
+            op: "replace",
+            path: basePath.concat(["length"]),
+            value: base.length
         })
     }
 
