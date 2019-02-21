@@ -15,10 +15,6 @@ function generateInsertToArrayPatches(
 ) {
     const delta = copy.length - base.length
 
-    if (delta <= 0) {
-        return false
-    }
-
     let i = 0
     while (base[i] === copy[i] && i < base.length) {
         ++i
@@ -57,11 +53,40 @@ function generateInsertToArrayPatches(
     return true
 }
 
+function generateInsertOrRemovePatches(
+    base,
+    copy,
+    basePath,
+    patches,
+    inversePatches
+) {
+    if (copy.length == base.length) {
+        return false
+    }
+
+    if (copy.length > base.length) {
+        return generateInsertToArrayPatches(
+            base,
+            copy,
+            basePath,
+            patches,
+            inversePatches
+        )
+    }
+    return generateInsertToArrayPatches(
+        copy,
+        base,
+        basePath,
+        inversePatches,
+        patches
+    )
+}
+
 function generateArrayPatches(state, basePath, patches, inversePatches) {
     const {base, copy, assigned} = state
     const minLength = Math.min(base.length, copy.length)
     if (
-        generateInsertToArrayPatches(
+        generateInsertOrRemovePatches(
             base,
             copy,
             basePath,

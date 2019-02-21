@@ -222,8 +222,19 @@ describe("arrays - splice middle", () => {
         d => {
             d.x.splice(1, 1)
         },
+        [{op: "remove", path: ["x", 1]}]
+    )
+})
+
+describe("arrays - modify and shrink", () => {
+    runPatchTest(
+        {x: [1, 2, 3]},
+        d => {
+            d.x[0] = 4
+            d.x.length = 2
+        },
         [
-            {op: "replace", path: ["x", 1], value: 3},
+            {op: "replace", path: ["x", 0], value: 4},
             {op: "replace", path: ["x", "length"], value: 2}
         ]
     )
