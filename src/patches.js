@@ -6,11 +6,19 @@ export function generatePatches(state, basePath, patches, inversePatches) {
         : generateObjectPatches(state, basePath, patches, inversePatches)
 }
 
-function _generateArrayPatches(base, copy, basePath, patches, inversePatches) {
+function _generateArrayPatches(
+    base,
+    copy,
+    assigned,
+    basePath,
+    patches,
+    inversePatches
+) {
     if (copy.length < base.length) {
         return _generateArrayPatches(
             copy,
             base,
+            assigned,
             basePath,
             inversePatches,
             patches
@@ -31,17 +39,18 @@ function _generateArrayPatches(base, copy, basePath, patches, inversePatches) {
 
     const replaceCount = baseEnd - start
     for (let i = 0; i < replaceCount; ++i) {
-        const path = basePath.concat([start + i])
-        if (copy[start + i] !== base[start + i]) {
+        const index = start + i
+        const path = basePath.concat([index])
+        if (assigned[index] && copy[index] !== base[index]) {
             patches.push({
                 op: "replace",
                 path,
-                value: copy[start + i]
+                value: copy[index]
             })
             inversePatches.push({
                 op: "replace",
                 path,
-                value: base[start + i]
+                value: base[index]
             })
         }
     }
@@ -75,9 +84,10 @@ function _generateArrayPatches(base, copy, basePath, patches, inversePatches) {
 }
 
 function generateArrayPatches(state, basePath, patches, inversePatches) {
-    return _generateArrayPatches(
+    _generateArrayPatches(
         state.base,
         state.copy,
+        state.assigned,
         basePath,
         patches,
         inversePatches

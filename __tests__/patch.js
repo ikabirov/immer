@@ -111,6 +111,16 @@ describe("simple assignment - 2", () => {
     )
 })
 
+describe.only("simple assignment - 3", () => {
+    runPatchTest(
+        {x: [{y: 4}]},
+        d => {
+            d.x[0].y++
+        },
+        [{op: "replace", path: ["x", 0, "y"], value: 5}]
+    )
+})
+
 describe("delete 1", () => {
     runPatchTest(
         {x: {y: 4}},
