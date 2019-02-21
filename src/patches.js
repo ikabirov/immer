@@ -146,6 +146,8 @@ export function applyPatches(draft, patches) {
                         delete base[key]
                     }
                     break
+                case "none":
+                    break
                 default:
                     throw new Error("Unsupported patch operation: " + patch.op)
             }
