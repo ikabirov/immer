@@ -6,33 +6,54 @@ export function generatePatches(state, basePath, patches, inversePatches) {
         : generateObjectPatches(state, basePath, patches, inversePatches)
 }
 
-function generateInsertToArrayPatches(
-    base,
-    copy,
-    basePath,
-    patches,
-    inversePatches
-) {
+function _generateArrayPatches(base, copy, basePath, patches, inversePatches) {
+    if (copy.length < base.length) {
+        return _generateArrayPatches(
+            copy,
+            base,
+            basePath,
+            inversePatches,
+            patches
+        )
+    }
+
     const delta = copy.length - base.length
 
-    let i = 0
-    while (base[i] === copy[i] && i < base.length) {
-        ++i
+    let start = 0
+    while (base[start] === copy[start] && start < base.length) {
+        ++start
     }
 
-    for (let j = i; j < base.length; ++j) {
-        if (base[i] !== copy[i + delta]) {
-            return false
+    let baseEnd = base.length
+    while (baseEnd > start && base[baseEnd - 1] === copy[baseEnd + delta - 1]) {
+        --baseEnd
+    }
+
+    const replaceCount = baseEnd - start
+    for (let i = 0; i < replaceCount; ++i) {
+        const path = basePath.concat([start + i])
+        if (copy[start + i] !== base[start + i]) {
+            patches.push({
+                op: "replace",
+                path,
+                value: copy[start + i]
+            })
+            inversePatches.push({
+                op: "replace",
+                path,
+                value: base[start + i]
+            })
         }
     }
+    start += replaceCount
 
-    const useRemove = i != base.length
+    const useRemove = start != base.length
     for (let j = 0; j < delta; ++j) {
-        const path = basePath.concat([i + j])
+        const path = basePath.concat([start + j])
         patches.push({
             op: "add",
             path,
-            value: copy[i + j]
+            value: copy[start + j]
         })
         if (useRemove) {
             inversePatches.unshift({
@@ -53,90 +74,14 @@ function generateInsertToArrayPatches(
     return true
 }
 
-function generateInsertOrRemovePatches(
-    base,
-    copy,
-    basePath,
-    patches,
-    inversePatches
-) {
-    if (copy.length == base.length) {
-        return false
-    }
-
-    if (copy.length > base.length) {
-        return generateInsertToArrayPatches(
-            base,
-            copy,
-            basePath,
-            patches,
-            inversePatches
-        )
-    }
-    return generateInsertToArrayPatches(
-        copy,
-        base,
-        basePath,
-        inversePatches,
-        patches
-    )
-}
-
 function generateArrayPatches(state, basePath, patches, inversePatches) {
-    const {base, copy, assigned} = state
-    const minLength = Math.min(base.length, copy.length)
-    if (
-        generateInsertOrRemovePatches(
-            base,
-            copy,
-            basePath,
-            patches,
-            inversePatches
-        )
-    ) {
-        return
-    }
-
-    // Look for replaced indices.
-    for (let i = 0; i < minLength; i++) {
-        if (assigned[i] && base[i] !== copy[i]) {
-            const path = basePath.concat(i)
-            patches.push({op: "replace", path, value: copy[i]})
-            inversePatches.push({op: "replace", path, value: base[i]})
-        }
-    }
-
-    // Did the array expand?
-    if (minLength < copy.length) {
-        for (let i = minLength; i < copy.length; i++) {
-            patches.push({
-                op: "add",
-                path: basePath.concat(i),
-                value: copy[i]
-            })
-        }
-        inversePatches.push({
-            op: "replace",
-            path: basePath.concat("length"),
-            value: base.length
-        })
-    }
-
-    // ...or did it shrink?
-    else if (minLength < base.length) {
-        patches.push({
-            op: "replace",
-            path: basePath.concat("length"),
-            value: copy.length
-        })
-        for (let i = minLength; i < base.length; i++) {
-            inversePatches.push({
-                op: "add",
-                path: basePath.concat(i),
-                value: base[i]
-            })
-        }
-    }
+    return _generateArrayPatches(
+        state.base,
+        state.copy,
+        basePath,
+        patches,
+        inversePatches
+    )
 }
 
 function generateObjectPatches(state, basePath, patches, inversePatches) {

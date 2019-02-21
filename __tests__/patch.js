@@ -307,6 +307,44 @@ describe("arrays - push multiple", () => {
     )
 })
 
+describe("arrays - splice (expand)", () => {
+    runPatchTest(
+        {x: [1, 2, 3]},
+        d => {
+            d.x.splice(1, 1, 4, 5, 6)
+        },
+        [
+            {op: "replace", path: ["x", 1], value: 4},
+            {op: "add", path: ["x", 2], value: 5},
+            {op: "add", path: ["x", 3], value: 6}
+        ],
+        [
+            {op: "remove", path: ["x", 3]},
+            {op: "remove", path: ["x", 2]},
+            {op: "replace", path: ["x", 1], value: 2}
+        ]
+    )
+})
+
+describe("arrays - splice (shrink)", () => {
+    runPatchTest(
+        {x: [1, 2, 3, 4, 5]},
+        d => {
+            d.x.splice(1, 3, 6)
+        },
+        [
+            {op: "remove", path: ["x", 3]},
+            {op: "remove", path: ["x", 2]},
+            {op: "replace", path: ["x", 1], value: 6}
+        ],
+        [
+            {op: "replace", path: ["x", 1], value: 2},
+            {op: "add", path: ["x", 2], value: 3},
+            {op: "add", path: ["x", 3], value: 4}
+        ]
+    )
+})
+
 describe("simple replacement", () => {
     runPatchTest({x: 3}, _d => 4, [{op: "replace", path: [], value: 4}])
 })
