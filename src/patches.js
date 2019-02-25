@@ -117,6 +117,9 @@ export function applyPatches(draft, patches) {
     for (let i = 0; i < patches.length; i++) {
         const patch = patches[i]
         const {path} = patch
+        if (patch.op === "none") {
+            continue
+        }
         if (path.length === 0 && patch.op === "replace") {
             draft = patch.value
         } else {
@@ -145,8 +148,6 @@ export function applyPatches(draft, patches) {
                     } else {
                         delete base[key]
                     }
-                    break
-                case "none":
                     break
                 default:
                     throw new Error("Unsupported patch operation: " + patch.op)
